@@ -52,19 +52,27 @@ class Scene {
     window.addEventListener("resize", (e) => this.onWindowResize(e), false);
 
     // Helpers
-    this.scene.add(new THREE.GridHelper(500, 500));
-    this.scene.add(new THREE.AxesHelper(10));
+    //this.scene.add(new THREE.GridHelper(500, 500));
+   // this.scene.add(new THREE.AxesHelper(10));
 
 
-   // this.renderer.setClearColor(new THREE.Color("lightblue"));
-    this.renderer.setSize(this.width, this.height);
+    // this.renderer.setClearColor(new THREE.Color("lightblue"));
+     this.renderer.setSize(this.width, this.height);
+     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
     // SKY
+    this.sun = new THREE.Vector3();
+    this.sky = new THREE.Sky();
     this.addSky();
-   // this.updateSun();
+    this.updateSun();
 
 
-    //this.addLights();
+    // WATER
+    this.water = new THREE.Water();
+    this.addWater();
+
+
+   // this.addLights();
     createEnvironment(this.scene);
 
     // Start the loop
@@ -77,42 +85,69 @@ class Scene {
   // Lighting 💡
 
   addLights() {
-   // this.scene.add(new THREE.AmbientLight(0xffffe6, 0.7));
+    //this.scene.add(new THREE.AmbientLight(0xffffe6, 0.7));
   }
 
   addSky(){
-    const sky = new THREE.Sky();
-    sky.scale.setScalar( 10 );
-    this.scene.add( sky );
-
-    const skyUniforms = sky.material.uniforms;
+    // const sky = new THREE.Sky();
+    this.sky.scale.setScalar( 1000 );
+    
+    const skyUniforms = this.sky.material.uniforms;
 
 				skyUniforms[ 'turbidity' ].value = 10;
 				skyUniforms[ 'rayleigh' ].value = 2;
 				skyUniforms[ 'mieCoefficient' ].value = 0.005;
 				skyUniforms[ 'mieDirectionalG' ].value = 0.8;
 
-				const parameters = {
-					elevation: 2,
-					azimuth: 180
-				};
-    //     const pmremGenerator = new THREE.PMREMGenerator( renderer );
-    }
+         
+    this.scene.add( this.sky ); 
+  }
   
 
-				// updateSun() {
+  updateSun() {
+    const pmremGenerator = new THREE.PMREMGenerator( this.renderer );
+    const parameters = {
+      elevation: 2,
+      azimuth: 180
+    };
 
-				// 	const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
-				// 	const theta = THREE.MathUtils.degToRad( parameters.azimuth );
+    const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
+    const theta = THREE.MathUtils.degToRad( parameters.azimuth );
 
-				// 	sun.setFromSphericalCoords( 1, phi, theta );
+    this.sun.setFromSphericalCoords( 1, phi, theta );
 
-				// 	sky.material.uniforms[ 'sunPosition' ].value.copy( sun );
-				// 	water.material.uniforms[ 'sunDirection' ].value.copy( sun ).normalize();
+    this.sky.material.uniforms[ 'sunPosition' ].value.copy( this.sun );
+  //  this.water.material.uniforms[ 'sunDirection' ].value.copy( this.sun ).normalize();
 
-				// 	scene.environment = pmremGenerator.fromScene( sky ).texture;
+    this.scene.environment = pmremGenerator.fromScene( this.sky ).texture;
+  }
 
-				// }
+  addWater(){
+
+    const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
+     this.water = new THREE.Water(
+      waterGeometry,
+      {
+        textureWidth: 512,
+        textureHeight: 512,
+        waterNormals: new THREE.TextureLoader().load( 'assets/waternormals.jpg', function ( texture ) {
+
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+        } ),
+        sunDirection: new THREE.Vector3(),
+        sunColor: 0xffffff,
+        waterColor: 0x001e0f,
+        distortionScale: 3.7,
+        fog: this.scene.fog !== undefined
+      }
+    );
+    this.water.material.uniforms[ 'sunDirection' ].value.copy( this.sun ).normalize();
+    this.water.rotation.x = - Math.PI / 2;
+
+    this.scene.add( this.water );
+
+  }
 
 				
 
@@ -238,7 +273,11 @@ class Scene {
   }
 
   render() {
+
+    this.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
+
     this.renderer.render(this.scene, this.camera);
+
   }
 
   //////////////////////////////////////////////////////////////////////
