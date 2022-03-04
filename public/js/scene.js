@@ -94,10 +94,15 @@ class Scene {
     
     const skyUniforms = this.sky.material.uniforms;
 
-				skyUniforms[ 'turbidity' ].value = 10;
-				skyUniforms[ 'rayleigh' ].value = 2;
-				skyUniforms[ 'mieCoefficient' ].value = 0.005;
-				skyUniforms[ 'mieDirectionalG' ].value = 0.8;
+				// skyUniforms[ 'turbidity' ].value = 10;
+				// skyUniforms[ 'rayleigh' ].value = 2;
+				// skyUniforms[ 'mieCoefficient' ].value = 0.005;
+				// skyUniforms[ 'mieDirectionalG' ].value = 0.8;
+
+        skyUniforms[ 'turbidity' ].value = 0.6;
+				skyUniforms[ 'rayleigh' ].value = 6;
+				skyUniforms[ 'mieCoefficient' ].value = 0.009;
+				skyUniforms[ 'mieDirectionalG' ].value = 0.988;
 
          
     this.scene.add( this.sky ); 
@@ -107,12 +112,15 @@ class Scene {
   updateSun() {
     const pmremGenerator = new THREE.PMREMGenerator( this.renderer );
     const parameters = {
-      elevation: 2,
+      // elevation: 2,
+      // azimuth: 180
+
+      elevation: 1,
       azimuth: 180
     };
 
     const phi = THREE.MathUtils.degToRad( 90 - parameters.elevation );
-    const theta = THREE.MathUtils.degToRad( parameters.azimuth );
+    var theta = THREE.MathUtils.degToRad( parameters.azimuth );
 
     this.sun.setFromSphericalCoords( 1, phi, theta );
 
@@ -275,6 +283,9 @@ class Scene {
   render() {
 
     this.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
+
+    //this.parameters.azimuth += 5;
+
 
     this.renderer.render(this.scene, this.camera);
 
